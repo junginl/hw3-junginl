@@ -3,11 +3,51 @@
   <groupId>edu.cmu.lti.11791.f13.hw3</groupId>
   <artifactId>hw3-junginl</artifactId>
   <version>0.0.3-SNAPSHOT</version>
-  <scm>
-  	<connection>scm:git:git@github.com:junginl/hw3-junginl.git</connection>
-  	<developerConnection>scm:git:git@github.com:junginl/hw3-junginl.git</developerConnection>
-  </scm>
-  <dependencies>
+  <repositories>
+		<repository>
+			<id>oaqa</id>
+			<url>http://mu.lti.cs.cmu.edu:8081/nexus/content/groups/course</url>
+		</repository>
+	</repositories>
+	<distributionManagement>
+		<repository>
+			<id>deployment</id>
+			<url>http://mu.lti.cs.cmu.edu:8081/nexus/content/repositories/course-releases</url>
+		</repository>
+		<snapshotRepository>
+			<id>snapshots</id>
+			<url>http://mu.lti.cs.cmu.edu:8081/nexus/content/repositories/course-snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>default</id>
+						<goals>
+							<goal>perform</goal>
+						</goals>
+						<configuration>
+							<pomFileName>hw3-junginl/pom.xml</pomFileName>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
   	<dependency>
   		<groupId>org.apache.uima</groupId>
   		<artifactId>uimaj-tools</artifactId>
@@ -44,4 +84,8 @@
   		<version>2.0.0</version>
   	</dependency>
   </dependencies>
+  <scm>
+  	<connection>scm:git:git@github.com:junginl/hw3-junginl.git</connection>
+  	<developerConnection>scm:git:git@github.com:junginl/hw3-junginl.git</developerConnection>
+  </scm>
 </project>
