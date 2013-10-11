@@ -72,8 +72,7 @@ public class TokenAnnotator extends JCasAnnotator_ImplBase {
     // Get the document text (input)
 
     // Convert the input into arrays of strings, split by lines.
-    String[] lines = docText.split("/n");
-
+    
     Token annotation = new Token(arg0);
     annotation.setBegin(0);
     annotation.setEnd(lines[0].length());
