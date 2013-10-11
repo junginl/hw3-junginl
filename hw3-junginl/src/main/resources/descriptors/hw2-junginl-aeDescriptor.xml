@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<analysisEngineDescription xmlns="http://uima.apache.org/resourceSpecifier">
+  <frameworkImplementation>org.apache.uima.java</frameworkImplementation>
+  <primitive>false</primitive>  
+  <delegateAnalysisEngineSpecifiers>
+    <delegateAnalysisEngine key="QuestionAnnotator">
+      <import name=".Users.junginlee.git.hw2-junginl.hw2-junginl.src.main.resources.descriptors.QuestionAnnotator"/>
+    </delegateAnalysisEngine>
+    <delegateAnalysisEngine key="AnswerAnnotator">
+      <import name=".Users.junginlee.git.hw2-junginl.hw2-junginl.src.main.resources.descriptors.AnswerAnnotator"/>
+    </delegateAnalysisEngine>
+    <delegateAnalysisEngine key="AnswerScoreAnnotator">
+      <import name=".Users.junginlee.git.hw2-junginl.hw2-junginl.src.main.resources.descriptors.AnswerScoreAnnotator"/>
+    </delegateAnalysisEngine>
+    <delegateAnalysisEngine key="TokenAnnotator">
+      <import name=".Users.junginlee.git.hw2-junginl.hw2-junginl.src.main.resources.descriptors.TokenAnnotator"/>
+    </delegateAnalysisEngine>
+    <delegateAnalysisEngine key="NGramAnnotator">
+      <import name=".Users.junginlee.git.hw2-junginl.hw2-junginl.src.main.resources.descriptors.NGramAnnotator"/>
+    </delegateAnalysisEngine>
+  <delegateAnalysisEngine key="EvalualtionAnnotator">
+      <import location="/Users/junginlee/git/hw2-junginl/hw2-junginl/src/main/resources/descriptors/EvalualtionAnnotator.xml"/>
+    </delegateAnalysisEngine>
+  </delegateAnalysisEngineSpecifiers>
+  <analysisEngineMetaData>
+    <name>aeDescriptor</name>
+    <description/>
+    <version>1.0</version>
+    <vendor/>
+    <configurationParameters/>
+    <configurationParameterSettings/>
+    <flowConstraints>
+      <fixedFlow>
+        <node>QuestionAnnotator</node>
+        <node>AnswerAnnotator</node>
+        <node>AnswerScoreAnnotator</node>
+        <node>TokenAnnotator</node>
+        <node>NGramAnnotator</node>
+      <node>EvalualtionAnnotator</node>
+      </fixedFlow>
+    </flowConstraints>
+    <fsIndexCollection/>
+    <capabilities>
+      <capability>
+        <inputs/>
+        <outputs>
+          <type allAnnotatorFeatures="true">edu.cmu.deiis.types.Token</type>
+          <type allAnnotatorFeatures="true">edu.cmu.deiis.types.Question</type>
+          <type allAnnotatorFeatures="true">edu.cmu.deiis.types.NGram</type>
+          <type allAnnotatorFeatures="true">edu.cmu.deiis.types.Evaluation</type>
+          <type allAnnotatorFeatures="true">uima.tcas.DocumentAnnotation</type>
+          <type allAnnotatorFeatures="true">edu.cmu.deiis.types.AnswerScore</type>
+          <type allAnnotatorFeatures="true">edu.cmu.deiis.types.Answer</type>
+          <type allAnnotatorFeatures="true">uima.cas.AnnotationBase</type>
+          <type allAnnotatorFeatures="true">uima.tcas.Annotation</type>
+          <type allAnnotatorFeatures="true">edu.cmu.deiis.types.Annotation</type>
+        </outputs>
+        <languagesSupported/>
+      </capability>
+    </capabilities>
+  <operationalProperties>
+      <modifiesCas>true</modifiesCas>
+      <multipleDeploymentAllowed>true</multipleDeploymentAllowed>
+      <outputsNewCASes>false</outputsNewCASes>
+    </operationalProperties>
+  </analysisEngineMetaData>
+  <resourceManagerConfiguration/>
+</analysisEngineDescription>
