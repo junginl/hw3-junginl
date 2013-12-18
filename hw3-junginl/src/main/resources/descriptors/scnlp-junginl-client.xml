@@ -1,5 +1,3 @@
-<!-- UIMA-AS Client Descriptor to access the Stanford CoreNLP UIMA-AS Remote 
-	Service from ClearTK toolkit deploy at mu server -->
 <customResourceSpecifier xmlns="http://uima.apache.org/resourceSpecifier">
 	<resourceClassName>org.apache.uima.aae.jms_adapter.JmsAnalysisEngineServiceAdapter
 	</resourceClassName>
