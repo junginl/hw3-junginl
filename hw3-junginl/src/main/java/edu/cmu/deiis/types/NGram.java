@@ -111,7 +111,43 @@ public class NGram extends Annotation {
   public void setElementType(String v) {
     if (NGram_Type.featOkTst && ((NGram_Type)jcasType).casFeat_elementType == null)
       jcasType.jcas.throwFeatMissing("elementType", "edu.cmu.deiis.types.NGram");
-    jcasType.ll_cas.ll_setStringValue(addr, ((NGram_Type)jcasType).casFeatCode_elementType, v);}    
+    jcasType.ll_cas.ll_setStringValue(addr, ((NGram_Type)jcasType).casFeatCode_elementType, v);} 
+  
+//*--------------*
+  //* Feature: sentenceId
+
+  /** getter for sentenceId - gets Integer sentence ID for this ngram.
+   * @generated */
+  public int getSentenceId() {
+    if (NGram_Type.featOkTst && ((NGram_Type)jcasType).casFeat_sentenceId == null)
+      jcasType.jcas.throwFeatMissing("sentenceId", "edu.cmu.deiis.types.NGram");
+    return jcasType.ll_cas.ll_getIntValue(addr, ((NGram_Type)jcasType).casFeatCode_sentenceId);}
+    
+  /** setter for sentenceId - sets Integer sentence ID for this ngram. 
+   * @generated */
+  public void setSentenceId(int v) {
+    if (NGram_Type.featOkTst && ((NGram_Type)jcasType).casFeat_sentenceId == null)
+      jcasType.jcas.throwFeatMissing("sentenceId", "edu.cmu.deiis.types.NGram");
+    jcasType.ll_cas.ll_setIntValue(addr, ((NGram_Type)jcasType).casFeatCode_sentenceId, v);}    
+   
+    
+  //*--------------*
+  //* Feature: order
+
+  /** getter for order - gets Integer order of ngram (1 for unigrams, 2 for bigrams, 3 for trigrams).
+   * @generated */
+  public int getOrder() {
+    if (NGram_Type.featOkTst && ((NGram_Type)jcasType).casFeat_order == null)
+      jcasType.jcas.throwFeatMissing("order", "edu.cmu.deiis.types.NGram");
+    return jcasType.ll_cas.ll_getIntValue(addr, ((NGram_Type)jcasType).casFeatCode_order);}
+    
+  /** setter for order - sets Integer order of ngram (1 for unigrams, 2 for bigrams, 3 for trigrams). 
+   * @generated */
+  public void setOrder(int v) {
+    if (NGram_Type.featOkTst && ((NGram_Type)jcasType).casFeat_order == null)
+      jcasType.jcas.throwFeatMissing("order", "edu.cmu.deiis.types.NGram");
+    jcasType.ll_cas.ll_setIntValue(addr, ((NGram_Type)jcasType).casFeatCode_order, v);}    
   }
+  
 
     

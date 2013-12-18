@@ -7,14 +7,18 @@ import java.util.Properties;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Iterator;
 
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_component.JCasAnnotator_ImplBase;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
-import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.Level;
 import org.apache.uima.util.Logger;
+import org.apache.uima.cas.FSIndex;
+import org.apache.uima.jcas.JCas;
+import org.apache.uima.jcas.cas.FSArray;
+
 
 import java.io.IOException;
 
@@ -36,6 +40,8 @@ import edu.stanford.nlp.process.TokenizerFactory;
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 import edu.stanford.nlp.util.CoreMap;
 
+import edu.cmu.deiis.types.*;
+
 /**
  * Homework 2 of 11791 F13: Designing Analysis Engine
  * 
@@ -43,6 +49,8 @@ import edu.stanford.nlp.util.CoreMap;
  */
 
 public class AnswerAnnotator extends JCasAnnotator_ImplBase {
+  private Pattern answerPattern = Pattern.compile("A [01] [A-Za-z ']+");
+
 
   /**
    * Outputs the Boolean value depending on whether the answer is correct or not
@@ -50,30 +58,87 @@ public class AnswerAnnotator extends JCasAnnotator_ImplBase {
   
  
   @Override
-  public void process(JCas arg0) throws AnalysisEngineProcessException {
+  public void process(JCas aJCas) throws AnalysisEngineProcessException {
     // TODO Auto-generated method stub
-    String docText = arg0.getDocumentText();
+    String docText = aJCas.getDocumentText();
     
-    // Convert the input into arrays of strings, split by lines.
-    String[] lines = docText.split("/n");
-
-    // loop over the answer candidates
-    for (int i = 0; i < lines.length - 1; i++) {
-      Answer answer = new Answer(arg0);
-      answer.setBegin(0);
-      answer.setEnd(lines[i + 1].length());
-      answer.setCasProcessorId("Answer");
-      answer.setConfidence(1.0);
+    // search for answers
+    Matcher matcher = answerPattern.matcher(docText);
+    int pos = 0; // document position
+    int i = 0; // answer counter
+    while (matcher.find(pos)) {
+    // found an answer; create annotation
+      i++;
+      Answer answer = new Answer(aJCas);
+      answer.setBegin(matcher.start());
+      answer.setEnd(matcher.end());
+      // get number of words in answer string (-2 for "A" and "0/1")
+      int numWords = matcher.group().split(" ").length - 2;
+      // get answer key
+      boolean key = false;
+      if (docText.charAt(answer.getBegin()+2) == '1')
+        key = true;
+      // add answer key to answer
+      answer.setIsCorrect(key);
+      // add ngrams to answer
+      int numUni = 0;
+      int numBi = 0;
+      int numTri = 0;
+      answer.setUnigrams(new FSArray(aJCas, numWords));
+      answer.setBigrams(new FSArray(aJCas, numWords - 1));
+      answer.setTrigrams(new FSArray(aJCas, numWords - 2));
+      // get ngrams
+      FSIndex ngramIndex = aJCas.getAnnotationIndex(NGram.type);
+      // loop over ngrams
+      Iterator ngramIter = ngramIndex.iterator();
+      while (ngramIter.hasNext()) {
+        // grab an ngram
+        NGram ngram = (NGram) ngramIter.next();
+        // check if ngram sentence ID matches current answer counter
+        if (ngram.getSentenceId() == i) {
+          // check order of ngram
+          if (ngram.getOrder() == 1) {
+            // add unigram to unigrams
+            answer.setUnigrams(numUni, ngram);
+            numUni++;
+            } 
+          else if (ngram.getOrder() == 2) {
+          // add bigram to bigrams
+            answer.setBigrams(numBi, ngram);
+            numBi++;
+            } 
+          else {
+            // add trigram to trigrams
+            answer.setTrigrams(numTri, ngram);
+            numTri++;
+            }
+          }
+        }
+      // add answer to indexes and iterate
       answer.addToIndexes();
-      if (lines[i + 1].substring(2, 3).equals("1")) {
-        answer.setIsCorrect(true);
-      } else if (lines[i + 1].substring(2, 3).equals("0")) {
-        answer.setIsCorrect(false);
-      }
+      pos = matcher.end();
     }
   }
 }
-  
+    
+//    // Convert the input into arrays of strings, split by lines.
+//    String[] lines = docText.split("/n");
+//
+//    // loop over the answer candidates
+//    for (int i = 0; i < lines.length - 1; i++) {
+//      Answer answer = new Answer(arg0);
+//      answer.setBegin(0);
+//      answer.setEnd(lines[i + 1].length());
+//      answer.setCasProcessorId("Answer");
+//      answer.setConfidence(1.0);
+//      answer.addToIndexes();
+//      if (lines[i + 1].substring(2, 3).equals("1")) {
+//        answer.setIsCorrect(true);
+//      } else if (lines[i + 1].substring(2, 3).equals("0")) {
+//        answer.setIsCorrect(false);
+//      }
+//    }
+ 
 //    private String answersPatternString;
 //    
 //    public void initialize(UimaContext aContext) throws ResourceInitializationException {

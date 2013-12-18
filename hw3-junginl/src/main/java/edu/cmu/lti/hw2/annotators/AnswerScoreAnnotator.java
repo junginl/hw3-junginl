@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
+import java.util.Iterator;
 
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_component.JCasAnnotator_ImplBase;
@@ -41,6 +42,8 @@ import edu.stanford.nlp.process.TokenizerFactory;
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 import edu.stanford.nlp.util.CoreMap;
 
+import edu.cmu.deiis.types.*;
+
 /**
  * Homework 1 of 11791 F13: Designing Analysis Engine
  * 
@@ -59,97 +62,171 @@ public class AnswerScoreAnnotator extends JCasAnnotator_ImplBase {
   }
   
   @Override
-  public void process(JCas arg0) throws AnalysisEngineProcessException {
+  public void process(JCas aJCas) throws AnalysisEngineProcessException {
     // TODO Auto-generated method stub
-    Question question = JCasUtil.selectSingle(arg0, Question.class);
-    List<Answer> answerList = new ArrayList<Answer>(JCasUtil.select(arg0, Answer.class));
-    List<NGram> nGramTokens = JCasUtil.selectCovered(NGram.class, question);
-    
-    Iterator<NGram> iter1 = nGramTokens.iterator();
-    NGram ngram = null;
-    List<String> questionUnigramBOW = new ArrayList<String>(0);
-    List<String> questionBigramBOW = new ArrayList<String>(0);
-    List<String> questionTrigramBOW = new ArrayList<String>(0);
-    
-    while (iter1.hasNext()) {
-      // Scoring
-      // Get Bag of Words term-frequency vector
-      ngram = iter1.next();
-      if (ngram.getElementType().equals("Unigram")) {
-        questionUnigramBOW.add(ngram.getCoveredText());
-      } else if (ngram.getElementType().equals("Bigram")) {
-        questionBigramBOW.add(ngram.getCoveredText());
-      } else {
-        questionTrigramBOW.add(ngram.getCoveredText());
-      }
-    }
-    
-    Iterator<Answer> iter2 = answerList.iterator();
-    Answer answer = null;
-    AnswerScore answerScore = null;
-    List<String> answerUnigramBOW = null;
-    List<String> commonUnigramBOW = null;
-    List<String> answerBigramBOW = null;
-    List<String> commonBigramBOW = null;
-    List<String> answerTrigramBOW = null;
-    List<String> commonTrigramBOW = null;
-    
-    // NGramOverlap Score
-    double score1 = 0.0;
-    double score2 = 0.0;
-    double score3 = 0.0;
-    
-   // Merged Score
-    double score = 0.0;
-    
-    while (iter2.hasNext()) {
-      // Scoring
-      // Get Bag of Words term-frequency vector
-      answer = iter2.next();
-      answerUnigramBOW = new ArrayList<String>(0);
-      answerBigramBOW = new ArrayList<String>(0);
-      answerTrigramBOW = new ArrayList<String>(0);
-      nGramTokens = JCasUtil.selectCovered(NGram.class, answer);
-      Iterator<NGram> iter3 = nGramTokens.iterator();
-      while (iter3.hasNext()) {
-        // Scoring
-        // Get Bag of Words term-frequency vector
-        ngram = iter3.next();
-        if (ngram.getElementType().equals("Unigram")) {
-          answerUnigramBOW.add(ngram.getCoveredText());
-        } else if (ngram.getElementType().equals("Bigram")) {
-          answerBigramBOW.add(ngram.getCoveredText());
-        } else {
-          answerTrigramBOW.add(ngram.getCoveredText());
-        }
+    FSIndex questionIndex = aJCas.getAnnotationIndex(Question.type);
+    Iterator questionIter = questionIndex.iterator();
+    Question question = null;
+    while (questionIter.hasNext())
+      question = (Question) questionIter.next();
+    // get answers
+    FSIndex answerIndex = aJCas.getAnnotationIndex(Answer.type);
+    // loop over answers
+    Iterator answerIter = answerIndex.iterator();
+    while (answerIter.hasNext()) {
+    // grab an answer
+      Answer answer = (Answer) answerIter.next();
+      // create a new AnswerScore object for this answer
+      AnswerScore score = new AnswerScore(aJCas);
+      score.setAnswer(answer);
+      score.setBegin(answer.getBegin());
+      score.setEnd(answer.getEnd());
+      
+      // Unigram 
+      int countUni = 0;
+      int matchUni = 0;
+      for (int i = 0; i < question.getUnigrams().size(); i++) {
+        for (int j = 0; j < answer.getUnigrams().size(); j++) {
+          NGram qNgram = (NGram) question.getUnigrams().get(i);
+          NGram aNgram = (NGram) answer.getUnigrams().get(j);
+          if (qNgram.getCoveredText().equals(aNgram.getCoveredText())) {
+          // update matching unigrams count
+            matchUni++;
+            }
+          }
+        // update unigrams count
+        countUni++;
       }
       
-   // Get common BOW
-      commonUnigramBOW = new ArrayList<String>(questionUnigramBOW);
-      commonBigramBOW = new ArrayList<String>(questionBigramBOW);
-      commonTrigramBOW = new ArrayList<String>(questionTrigramBOW);
+      // Bigram 
+      int countBi = 0;
+      int matchBi = 0;
+      for (int i = 0; i < question.getBigrams().size(); i++) {
+        for (int j = 0; j < answer.getBigrams().size(); j++) {
+          NGram qNgram = (NGram) question.getBigrams().get(i);
+          NGram aNgram = (NGram) answer.getBigrams().get(j);
+          if (qNgram.getCoveredText().equals(aNgram.getCoveredText())) {
+            // update matching bigrams count
+            matchBi++;
+            }
+          }
+        // update bigrams count
+        countBi++;
+      }
       
-      commonUnigramBOW.retainAll(answerUnigramBOW);
-      commonBigramBOW.retainAll(answerBigramBOW);
-      commonTrigramBOW.retainAll(answerTrigramBOW);
-      
-      score1 = ((double) commonUnigramBOW.size()) / answerUnigramBOW.size();
-      score2 = ((double) commonBigramBOW.size()) / answerBigramBOW.size();
-      score3 = ((double) commonTrigramBOW.size()) / answerTrigramBOW.size();
-      
-      score = ((double) (score1 + score2 + score3) / 3);
-      
-      // Add AnswerScore Annotation to index
-      answerScore = new AnswerScore(arg0);
-      answerScore.setBegin(answer.getBegin());
-      answerScore.setEnd(answer.getEnd());
-      answerScore.setCasProcessorId("SimilarityScorer");
-      answerScore.setConfidence(score);
-      answerScore.setScore(score);
-      answerScore.setAnswer(answer);
-      answerScore.addToIndexes();
+      // Trigram 
+      int countTri = 0;
+      int matchTri = 0;
+      for (int i = 0; i < question.getTrigrams().size(); i++) {
+        for (int j = 0; j < answer.getTrigrams().size(); j++) {
+          NGram qNgram = (NGram) question.getTrigrams().get(i);
+          NGram aNgram = (NGram) answer.getTrigrams().get(j);
+          if (qNgram.getCoveredText().equals(aNgram.getCoveredText())) {
+            // update matching trigrams count
+            matchTri++;
+            }
+          }
+        // update trigrams count
+        countTri++;
+      }
+      // score
+      score.setScore((((double) matchUni + (double) matchBi + (double) matchTri) / ((double) countUni + (double) countBi + (double) countTri)));
+      // add score to indexes and iterate
+      score.addToIndexes();
+      }
     }
-    
+  }
+
+
+//    Question question = JCasUtil.selectSingle(arg0, Question.class);
+//    List<Answer> answerList = new ArrayList<Answer>(JCasUtil.select(arg0, Answer.class));
+//    List<NGram> nGramTokens = JCasUtil.selectCovered(NGram.class, question);
+//    
+//    Iterator<NGram> iter1 = nGramTokens.iterator();
+//    NGram ngram = null;
+//    List<String> questionUnigramBOW = new ArrayList<String>(0);
+//    List<String> questionBigramBOW = new ArrayList<String>(0);
+//    List<String> questionTrigramBOW = new ArrayList<String>(0);
+//    
+//    while (iter1.hasNext()) {
+//      // Scoring
+//      // Get Bag of Words term-frequency vector
+//      ngram = iter1.next();
+//      if (ngram.getElementType().equals("Unigram")) {
+//        questionUnigramBOW.add(ngram.getCoveredText());
+//      } else if (ngram.getElementType().equals("Bigram")) {
+//        questionBigramBOW.add(ngram.getCoveredText());
+//      } else {
+//        questionTrigramBOW.add(ngram.getCoveredText());
+//      }
+//    }
+//    
+//    Iterator<Answer> iter2 = answerList.iterator();
+//    Answer answer = null;
+//    AnswerScore answerScore = null;
+//    List<String> answerUnigramBOW = null;
+//    List<String> commonUnigramBOW = null;
+//    List<String> answerBigramBOW = null;
+//    List<String> commonBigramBOW = null;
+//    List<String> answerTrigramBOW = null;
+//    List<String> commonTrigramBOW = null;
+//    
+//    // NGramOverlap Score
+//    double score1 = 0.0;
+//    double score2 = 0.0;
+//    double score3 = 0.0;
+//    
+//   // Merged Score
+//    double score = 0.0;
+//    
+//    while (iter2.hasNext()) {
+//      // Scoring
+//      // Get Bag of Words term-frequency vector
+//      answer = iter2.next();
+//      answerUnigramBOW = new ArrayList<String>(0);
+//      answerBigramBOW = new ArrayList<String>(0);
+//      answerTrigramBOW = new ArrayList<String>(0);
+//      nGramTokens = JCasUtil.selectCovered(NGram.class, answer);
+//      Iterator<NGram> iter3 = nGramTokens.iterator();
+//      while (iter3.hasNext()) {
+//        // Scoring
+//        // Get Bag of Words term-frequency vector
+//        ngram = iter3.next();
+//        if (ngram.getElementType().equals("Unigram")) {
+//          answerUnigramBOW.add(ngram.getCoveredText());
+//        } else if (ngram.getElementType().equals("Bigram")) {
+//          answerBigramBOW.add(ngram.getCoveredText());
+//        } else {
+//          answerTrigramBOW.add(ngram.getCoveredText());
+//        }
+//      }
+//      
+//   // Get common BOW
+//      commonUnigramBOW = new ArrayList<String>(questionUnigramBOW);
+//      commonBigramBOW = new ArrayList<String>(questionBigramBOW);
+//      commonTrigramBOW = new ArrayList<String>(questionTrigramBOW);
+//      
+//      commonUnigramBOW.retainAll(answerUnigramBOW);
+//      commonBigramBOW.retainAll(answerBigramBOW);
+//      commonTrigramBOW.retainAll(answerTrigramBOW);
+//      
+//      score1 = ((double) commonUnigramBOW.size()) / answerUnigramBOW.size();
+//      score2 = ((double) commonBigramBOW.size()) / answerBigramBOW.size();
+//      score3 = ((double) commonTrigramBOW.size()) / answerTrigramBOW.size();
+//      
+//      score = ((double) (score1 + score2 + score3) / 3);
+//      
+//      // Add AnswerScore Annotation to index
+//      answerScore = new AnswerScore(arg0);
+//      answerScore.setBegin(answer.getBegin());
+//      answerScore.setEnd(answer.getEnd());
+//      answerScore.setCasProcessorId("SimilarityScorer");
+//      answerScore.setConfidence(score);
+//      answerScore.setScore(score);
+//      answerScore.setAnswer(answer);
+//      answerScore.addToIndexes();
+//    }
+//    
 //    //Get the document text (input).
 //    String docText = arg0.getDocumentText();
 //    
@@ -377,5 +454,5 @@ public class AnswerScoreAnnotator extends JCasAnnotator_ImplBase {
 //      }
 //    }
 //    precision = num / denom;
-  }
-}
+//  }
+//}

@@ -1,0 +1,13 @@
+<!-- UIMA-AS Client Descriptor to access the Stanford CoreNLP UIMA-AS Remote 
+	Service from ClearTK toolkit deploy at mu server -->
+<customResourceSpecifier xmlns="http://uima.apache.org/resourceSpecifier">
+	<resourceClassName>org.apache.uima.aae.jms_adapter.JmsAnalysisEngineServiceAdapter
+	</resourceClassName>
+	<parameters>
+		<parameter name="brokerURL" value="tcp://mu.lti.cs.cmu.edu:61616" />
+		<parameter name="endpoint" value="ScnlpQueue" />
+		<parameter name="timeout" value="5000000" />
+		<parameter name="getmetatimeout" value="5000" />
+		<parameter name="cpctimeout" value="50000" />
+	</parameters>
+</customResourceSpecifier>

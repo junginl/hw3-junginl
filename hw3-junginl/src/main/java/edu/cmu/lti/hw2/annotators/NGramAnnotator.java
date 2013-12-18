@@ -14,6 +14,8 @@ import org.apache.uima.fit.util.FSCollectionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
+import org.apache.uima.cas.FSIndex;
+import org.apache.uima.jcas.cas.FSArray;
 
 import java.io.IOException;
 
@@ -38,6 +40,9 @@ import edu.stanford.nlp.process.TokenizerFactory;
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 import edu.stanford.nlp.util.CoreMap;
 
+import edu.cmu.deiis.types.*;
+
+
 /**
  * Homework 2 of 11791 F13: Designing Analysis Engine
  * 
@@ -55,69 +60,172 @@ public class NGramAnnotator extends JCasAnnotator_ImplBase {
     }
   
   @Override
-  public void process(JCas arg0) throws AnalysisEngineProcessException {
+  public void process(JCas aJCas) throws AnalysisEngineProcessException {
     // TODO Auto-generated method stub
-    
-    //question
-    Question question = JCasUtil.selectSingle(arg0, Question.class);
-    List<Token> questionTokens = JCasUtil.selectCovered(Token.class, question);
-    this.addNGramAnnotations(arg0, questionTokens, "Unigram", 1);
-    this.addNGramAnnotations(arg0, questionTokens, "Bigram", 2);
-    this.addNGramAnnotations(arg0, questionTokens, "Trigram", 3);
-    
-    //answers
-    List<Answer> answerList = new ArrayList<Answer>(JCasUtil.select(arg0, Answer.class));
-    Iterator<Answer> iter = answerList.iterator();
-    List<Token> answerTokens = null;
-    while(iter.hasNext()){
-    answerTokens = JCasUtil.selectCovered(Token.class, iter.next());
-    this.addNGramAnnotations(arg0, answerTokens, "Unigram", 1);
-    this.addNGramAnnotations(arg0, answerTokens, "Bigram", 2);
-    this.addNGramAnnotations(arg0, answerTokens, "Trigram", 3);
+    // get tokens
+    FSIndex tokenIndex = aJCas.getAnnotationIndex(Token.type);
+    // loop over tokens
+    Iterator tokenIter = tokenIndex.iterator();
+    Token penult = null;
+    Token antepenult = null;
+    int sentenceNum = 0;
+    while (tokenIter.hasNext()) {
+      // grab a token
+      Token token = (Token) tokenIter.next();
+      // check if we're on a new sentence
+      if (sentenceNum != token.getSentenceId()) {
+        // new sentence, update sentenceNum counter and reset previous token buffers
+        sentenceNum = token.getSentenceId();
+        penult = null;
+        antepenult = null;
+        }
+      // check previous tokens
+      if (penult == null && antepenult == null) {
+        // Case 1: Previous two tokens are not set
+        // set previous token
+        penult = token;
+        } 
+      else if (antepenult == null) {
+        // Case 2: Penultimate token is set, antepenultimate token is not set
+        // check whether previous two tokens are from same sentence
+        if (penult.getSentenceId() == token.getSentenceId()) {
+          // make a bigram
+          NGram bigram = new NGram(aJCas);
+          bigram.setOrder(2);
+          bigram.setElementType("Token");
+          bigram.setElements(new FSArray(aJCas, 2));
+          // add tokens to bigram
+          bigram.setElements(0, penult);
+          bigram.setElements(1, token);
+          // set bigram begin, end, sentenceId, and coveredText
+          bigram.setBegin(penult.getBegin());
+          bigram.setEnd(token.getEnd());
+          bigram.setSentenceId(token.getSentenceId());
+          // add bigram to indexes
+          bigram.addToIndexes();
+          }
+        // set previous two tokens
+        antepenult = penult;
+        penult = token;
+        } 
+      else {
+        // Case 3: Previous two tokens are set
+        // check whether previous two tokens are from same sentence
+        if (penult.getSentenceId() == token.getSentenceId()) {
+          // make a bigram
+          NGram bigram = new NGram(aJCas);
+          bigram.setOrder(2);
+          bigram.setElementType("Token");
+          bigram.setElements(new FSArray(aJCas, 2));
+          // add tokens to bigram
+          bigram.setElements(0, penult);
+          bigram.setElements(1, token);
+          // set bigram begin, end, sentence ID, and covered text
+          bigram.setBegin(penult.getBegin());
+          bigram.setEnd(token.getEnd());
+          bigram.setSentenceId(token.getSentenceId());
+          // add bigram to indexes
+          bigram.addToIndexes();
+          }
+        // check whether previous three tokens are from same sentence
+        if (antepenult.getSentenceId() == penult.getSentenceId() && penult.getSentenceId() == token.getSentenceId()) {
+          // make a trigram
+          NGram trigram = new NGram(aJCas);
+          trigram.setOrder(3);
+          trigram.setElementType("Token");
+          trigram.setElements(new FSArray(aJCas, 3));
+          // add tokens to trigram
+          trigram.setElements(0, antepenult);
+          trigram.setElements(1, penult);
+          trigram.setElements(2, token);
+          // set trigram begin, end, sentence ID, and covered text
+          trigram.setBegin(antepenult.getBegin());
+          trigram.setEnd(token.getEnd());
+          trigram.setSentenceId(token.getSentenceId());
+          // add trigram to indexes
+          trigram.addToIndexes();
+          }
+        // set previous two tokens
+        antepenult = penult;
+        penult = token;
+        }
+      // set up a unigram
+      NGram unigram = new NGram(aJCas);
+      unigram.setOrder(1);
+      unigram.setElementType("Token");
+      unigram.setElements(new FSArray(aJCas, 1));
+      // add token to unigram
+      unigram.setElements(0, token);
+      // set unigram begin, end, sentence ID, and covered text
+      unigram.setBegin(token.getBegin());
+      unigram.setEnd(token.getEnd());
+      unigram.setSentenceId(token.getSentenceId());
+      // add unigram to indexes
+      unigram.addToIndexes();
+      }
     }
   }
-  
-  private void addNGramAnnotations(JCas aJCas, List<Token> tokens, String ngramType, int n) {
-    int tokenListSize = tokens.size();
-    NGram ngram = null;
-    boolean containSpChar = false;
-    Token coveredToken = null;
-    int startInd = -1;
-    int endInd = 0;
-    List<Token> coveredTokens = null;
-    for (int qt = 0; qt < tokenListSize; qt++) {
-    // Check whether sufficient tokens available for creating ngram
-    // In other words, check qt+(n-1) th token exists
-    containSpChar=false;
-      if (qt + (n - 1) >= tokenListSize) {
-        return;
-      }
-      coveredTokens = new ArrayList<Token>(0);
-      ngram = new NGram(aJCas);
-      for (int t = 0; t < n; t++) {
-        coveredToken = tokens.get(qt + t);
-        if (startInd == -1) {
-          startInd = coveredToken.getBegin();
-        }
-        if(coveredToken.getCoveredText().equals(".")||coveredToken.getCoveredText().equals("?")){
-          containSpChar=true;
-        }
-        coveredTokens.add(coveredToken);
-        endInd = coveredToken.getEnd();
-      }
-      if(containSpChar){
-        continue;
-      }
-      ngram.setBegin(startInd);
-      ngram.setEnd(endInd);
-      ngram.setConfidence(1.0);
-      ngram.setCasProcessorId("NGramAnnotator");
-      ngram.setElementType(ngramType);
-      ngram.setElements(FSCollectionFactory.createFSArray(aJCas, coveredTokens));
-      ngram.addToIndexes();
-      startInd = -1;
-      endInd = 0;
-    }
+
+//    //question
+//    Question question = JCasUtil.selectSingle(aJCas, Question.class);
+//    List<Token> questionTokens = JCasUtil.selectCovered(Token.class, question);
+//    this.addNGramAnnotations(aJCas, questionTokens, "Unigram", 1);
+//    this.addNGramAnnotations(aJCas, questionTokens, "Bigram", 2);
+//    this.addNGramAnnotations(aJCas, questionTokens, "Trigram", 3);
+//    
+//    //answers
+//    List<Answer> answerList = new ArrayList<Answer>(JCasUtil.select(aJCas, Answer.class));
+//    Iterator<Answer> iter = answerList.iterator();
+//    List<Token> answerTokens = null;
+//    while(iter.hasNext()){
+//    answerTokens = JCasUtil.selectCovered(Token.class, iter.next());
+//    this.addNGramAnnotations(aJCas, answerTokens, "Unigram", 1);
+//    this.addNGramAnnotations(aJCas, answerTokens, "Bigram", 2);
+//    this.addNGramAnnotations(aJCas, answerTokens, "Trigram", 3);
+//    }
+//  }
+//  
+//  private void addNGramAnnotations(JCas aJCas, List<Token> tokens, String ngramType, int n) {
+//    int tokenListSize = tokens.size();
+//    NGram ngram = null;
+//    boolean containSpChar = false;
+//    Token coveredToken = null;
+//    int startInd = -1;
+//    int endInd = 0;
+//    List<Token> coveredTokens = null;
+//    for (int qt = 0; qt < tokenListSize; qt++) {
+//    // Check whether sufficient tokens available for creating ngram
+//    // In other words, check qt+(n-1) th token exists
+//    containSpChar=false;
+//      if (qt + (n - 1) >= tokenListSize) {
+//        return;
+//      }
+//      coveredTokens = new ArrayList<Token>(0);
+//      ngram = new NGram(aJCas);
+//      for (int t = 0; t < n; t++) {
+//        coveredToken = tokens.get(qt + t);
+//        if (startInd == -1) {
+//          startInd = coveredToken.getBegin();
+//        }
+//        if(coveredToken.getCoveredText().equals(".")||coveredToken.getCoveredText().equals("?")){
+//          containSpChar=true;
+//        }
+//        coveredTokens.add(coveredToken);
+//        endInd = coveredToken.getEnd();
+//      }
+//      if(containSpChar){
+//        continue;
+//      }
+//      ngram.setBegin(startInd);
+//      ngram.setEnd(endInd);
+//      ngram.setConfidence(1.0);
+//      ngram.setCasProcessorId("NGramAnnotator");
+//      ngram.setElementType(ngramType);
+//      ngram.setElements(FSCollectionFactory.createFSArray(aJCas, coveredTokens));
+//      ngram.addToIndexes();
+//      startInd = -1;
+//      endInd = 0;
+//    }
 //    //Get the document text (input).
 //    String docText = arg0.getDocumentText();
 //
@@ -164,5 +272,5 @@ public class NGramAnnotator extends JCasAnnotator_ImplBase {
 //        }
 //      }
 //    }
-  }
-}
+//  }
+//}

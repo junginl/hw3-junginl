@@ -58,6 +58,24 @@ public class Token extends Annotation {
     * <!-- end-user-doc -->
   @generated modifiable */
   private void readObject() {/*default - does nothing empty block */}
+  
+  
+//*--------------*
+  //* Feature: sentenceId
+
+  /** getter for sentenceId - gets Integer sentence ID for this token.
+   * @generated */
+  public int getSentenceId() {
+    if (Token_Type.featOkTst && ((Token_Type)jcasType).casFeat_sentenceId == null)
+      jcasType.jcas.throwFeatMissing("sentenceId", "edu.cmu.deiis.types.Token");
+    return jcasType.ll_cas.ll_getIntValue(addr, ((Token_Type)jcasType).casFeatCode_sentenceId);}
+    
+  /** setter for sentenceId - sets Integer sentence ID for this token. 
+   * @generated */
+  public void setSentenceId(int v) {
+    if (Token_Type.featOkTst && ((Token_Type)jcasType).casFeat_sentenceId == null)
+      jcasType.jcas.throwFeatMissing("sentenceId", "edu.cmu.deiis.types.Token");
+    jcasType.ll_cas.ll_setIntValue(addr, ((Token_Type)jcasType).casFeatCode_sentenceId, v);}    
      
 }
 

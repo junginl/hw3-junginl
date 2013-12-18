@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<analysisEngineDescription xmlns="http://uima.apache.org/resourceSpecifier">
+  <frameworkImplementation>org.apache.uima.java</frameworkImplementation>
+  <primitive>false</primitive>  
+  <delegateAnalysisEngineSpecifiers>
+    <delegateAnalysisEngine key="TokenAnnotator">
+      <import name="descriptors.TokenAnnotator"/>
+    </delegateAnalysisEngine>
+  <delegateAnalysisEngine key="NGramAnnotator">
+      <import location="descriptors.NGramAnnotator"/>
+    </delegateAnalysisEngine>
+  <delegateAnalysisEngine key="AnswerAnnotator">
+      <import location="descriptors.AnswerAnnotator"/>
+    </delegateAnalysisEngine>
+    <delegateAnalysisEngine key="QuestionAnnotator">
+      <import location="descriptors.QuestionAnnotator"/>
+    </delegateAnalysisEngine>
+    <delegateAnalysisEngine key="AnswerScoreAnnotator">
+      <import location="descriptors.AnswerScoreAnnotator"/>
+    </delegateAnalysisEngine>
+  </delegateAnalysisEngineSpecifiers>
+  <analysisEngineMetaData>
+    <name>hw2-junginl-aae.xml</name>
+    <description>Hw2 AAE.</description>
+    <version>1.0</version>
+    <vendor>Carnegie Mellon University</vendor>
+    <configurationParameters searchStrategy="language_fallback"/>
+    <configurationParameterSettings/>
+    <flowConstraints>
+      <fixedFlow>
+        <node>TokenAnnotator</node>
+      <node>NGramAnnotator</node>
+      <node>QuestionAnnotator</node>
+        <node>AnswerAnnotator</node>
+        <node>AnswerScoreAnnotator</node>
+      </fixedFlow>
+    </flowConstraints>
+    <typePriorities/>
+    <fsIndexCollection/>
+    <capabilities>
+      <capability>
+        <inputs/>
+        <outputs>
+          <type allAnnotatorFeatures="true">edu.cmu.deiis.types.Token</type>
+          <type allAnnotatorFeatures="true">edu.cmu.deiis.types.Question</type>
+          <type allAnnotatorFeatures="true">edu.cmu.deiis.types.Answer</type>
+        <type allAnnotatorFeatures="true">edu.cmu.deiis.types.NGram</type>
+          <type allAnnotatorFeatures="true">edu.cmu.deiis.types.AnswerScore</type>
+        </outputs>
+        <languagesSupported/>
+      </capability>
+    </capabilities>
+  <operationalProperties>
+      <modifiesCas>true</modifiesCas>
+      <multipleDeploymentAllowed>true</multipleDeploymentAllowed>
+      <outputsNewCASes>false</outputsNewCASes>
+    </operationalProperties>
+  </analysisEngineMetaData>
+  <resourceManagerConfiguration>
+    </resourceManagerConfiguration>
+</analysisEngineDescription>
